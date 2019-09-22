@@ -47,7 +47,7 @@ namespace Nez.Tiled
 				{
 					var xDocTileset = XDocument.Load(stream);
 
-					var tileset = new TmxTileset(map, xDocTileset.Element("tileset"), firstGid, tmxDir)
+					var tileset = new TmxTileset(map, xDocTileset.Element("tileset"), firstGid, Path.GetDirectoryName(source))
 					{
 						TmxDirectory = Path.GetDirectoryName(source)
 					};
