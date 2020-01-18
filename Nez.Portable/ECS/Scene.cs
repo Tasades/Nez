@@ -361,7 +361,7 @@ namespace Nez
 
 			// prep our render textures
 			UpdateResolutionScaler();
-			GraphicsDeviceExt.SetRenderTarget(Core.GraphicsDevice, _sceneRenderTarget);
+			Core.GraphicsDevice.SetRenderTarget(_sceneRenderTarget);
 
 			if (EntityProcessors != null)
 				EntityProcessors.Begin();
@@ -407,7 +407,7 @@ namespace Nez
 		public virtual void Update()
 		{
 			// we set the RenderTarget here so that the Viewport will match the RenderTarget properly
-			GraphicsDeviceExt.SetRenderTarget(Core.GraphicsDevice, _sceneRenderTarget);
+			Core.GraphicsDevice.SetRenderTarget(_sceneRenderTarget);
 
 			// update our lists in case they have any changes
 			Entities.UpdateLists();
@@ -445,7 +445,7 @@ namespace Nez
 			// the current RenderTarget when they render. If the first Renderer wants the sceneRenderTarget we set and clear it now.
 			if (_renderers[0].WantsToRenderToSceneRenderTarget)
 			{
-				GraphicsDeviceExt.SetRenderTarget(Core.GraphicsDevice, _sceneRenderTarget);
+				Core.GraphicsDevice.SetRenderTarget(_sceneRenderTarget);
 				Core.GraphicsDevice.Clear(ClearColor);
 			}
 
@@ -457,7 +457,7 @@ namespace Nez
 				// Because of that, we track when we are done with our RenderTargets and clear the scene at that time.
 				if (lastRendererHadRenderTarget && _renderers.Buffer[i].WantsToRenderToSceneRenderTarget)
 				{
-					GraphicsDeviceExt.SetRenderTarget(Core.GraphicsDevice, _sceneRenderTarget);
+					Core.GraphicsDevice.SetRenderTarget(_sceneRenderTarget);
 					Core.GraphicsDevice.Clear(ClearColor);
 
 					// force a Camera matrix update to account for the new Viewport size
@@ -503,7 +503,7 @@ namespace Nez
 				{
 					// we need to set the proper RenderTarget here. We want the last one that was the destination of our PostProcessors
 					var currentRenderTarget = Mathf.IsEven(enabledCounter) ? _sceneRenderTarget : _destinationRenderTarget;
-					GraphicsDeviceExt.SetRenderTarget(Core.GraphicsDevice, currentRenderTarget);
+					Core.GraphicsDevice.SetRenderTarget(currentRenderTarget);
 				}
 
 				// force a Camera matrix update to account for the new Viewport size
@@ -535,7 +535,7 @@ namespace Nez
 			else
 			{
 				var currentRenderTarget = Mathf.IsEven(enabledCounter) ? _sceneRenderTarget : _destinationRenderTarget;
-				GraphicsDeviceExt.SetRenderTarget(Core.GraphicsDevice, finalRenderTarget);
+				Core.GraphicsDevice.SetRenderTarget(finalRenderTarget);
 				Core.GraphicsDevice.Clear(LetterboxColor);
 
 				Graphics.Instance.Batcher.Begin(BlendState.Opaque, SamplerState, null, null);
@@ -1070,7 +1070,7 @@ namespace Nez
 		/// </summary>
 		/// <returns>The of type.</returns>
 		/// <typeparam name="T">The 1st type parameter.</typeparam>
-		public List<Entity> EntitiesOfType<T>() where T : Entity => Entities.EntitiesOfType<T>();
+		public List<T> EntitiesOfType<T>() where T : Entity => Entities.EntitiesOfType<T>();
 
 		/// <summary>
 		/// returns the first enabled loaded component of Type T
