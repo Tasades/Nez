@@ -146,7 +146,7 @@ namespace Nez.Tiled
 				{
 					var xDocTileset = XDocument.Load(stream);
 
-					var tileset = new TmxTileset().LoadTmxTileset(map, xDocTileset.Element("tileset"), firstGid, tmxDir);
+					var tileset = new TmxTileset().LoadTmxTileset(map, xDocTileset.Element("tileset"), firstGid, Path.GetDirectoryName(source));
 					tileset.TmxDirectory = Path.GetDirectoryName(source);
 
 					return tileset;
@@ -158,10 +158,10 @@ namespace Nez.Tiled
 
 		public static Dictionary<string, string> ParsePropertyDict(XContainer xmlProp)
 		{
-			if (xmlProp == null)
-				return null;
-
 			var dict = new Dictionary<string, string>();
+			if (xmlProp == null)
+				return dict;
+
 			foreach (var p in xmlProp.Elements("property"))
 			{
 				var pname = p.Attribute("name").Value;
@@ -390,15 +390,25 @@ namespace Nez.Tiled
 
 		public static TmxObject LoadTmxObject(this TmxObject obj, TmxMap map, XElement xObject)
 		{
-			obj.Id = (int?)xObject.Attribute("id") ?? 0;
-			obj.Name = (string)xObject.Attribute("name") ?? string.Empty;
-			obj.X = (float)xObject.Attribute("x");
-			obj.Y = (float)xObject.Attribute("y");
-			obj.Width = (float?)xObject.Attribute("width") ?? 0.0f;
-			obj.Height = (float?)xObject.Attribute("height") ?? 0.0f;
-			obj.Type = (string)xObject.Attribute("type") ?? string.Empty;
-			obj.Visible = (bool?)xObject.Attribute("visible") ?? true;
-			obj.Rotation = (float?)xObject.Attribute("rotation") ?? 0.0f;
+			// load template if it exists
+			XAttribute template = xObject.Attribute("template");
+
+			TmxObjectTemplate Template = null;
+			if (template != null)
+			{
+				Template = new TmxObjectTemplate().LoadTmxObjectTemplate(map, template.Value);
+			}
+
+			// default values are the values from the template but can be overwritten by the object itself
+			obj.Id = (int?)xObject.Attribute("id") ?? Template?.TemplateObject.Id ?? 0;
+			obj.Name = (string)xObject.Attribute("name") ?? Template?.TemplateObject.Name ?? string.Empty;
+			obj.X = (float?)xObject.Attribute("x") ?? Template?.TemplateObject.X ?? 0;
+			obj.Y = (float?)xObject.Attribute("y") ?? Template?.TemplateObject.Y ?? 0;
+			obj.Width = (float?)xObject.Attribute("width") ?? Template?.TemplateObject.Width ?? 0;
+			obj.Height = (float?)xObject.Attribute("height") ?? Template?.TemplateObject.Height ?? 0;
+			obj.Type = (string)xObject.Attribute("type") ?? Template?.TemplateObject.Type ?? string.Empty;
+			obj.Visible = (bool?)xObject.Attribute("visible") ?? Template?.TemplateObject.Visible ?? true;
+			obj.Rotation = (float?)xObject.Attribute("rotation") ?? Template?.TemplateObject.Rotation ?? 0;
 
 			// Assess object type and assign appropriate content
 			var xGid = xObject.Attribute("gid");
@@ -443,8 +453,40 @@ namespace Nez.Tiled
 
 			obj.Properties = ParsePropertyDict(xObject.Element("properties"));
 
+			// take over properties that were not in object but in the template
+			if (Template != null)
+			{
+				foreach (string key in Template.TemplateObject.Properties.Keys)
+				{
+					if (!obj.Properties.ContainsKey(key))
+					{
+						string value = Template.TemplateObject.Properties[key];
+						if (!string.IsNullOrEmpty(value))
+						{
+							obj.Properties.Add(key, value);
+						}
+					}
+				}
+			}
+
 			return obj;
 		}
+
+		public static TmxObjectTemplate LoadTmxObjectTemplate(this TmxObjectTemplate obj, TmxMap map, string templatePath)
+		{
+			obj.Source = Path.Combine(map.TmxDirectory, templatePath);
+
+			using (var stream = TitleContainer.OpenStream(obj.Source))
+			{
+				var xTmxObjectTemplate = XDocument.Load(stream);
+				var xTemplate = xTmxObjectTemplate.Element("template");
+
+				obj.TemplateObject = new TmxObject().LoadTmxObject(map, xTemplate.Element("object"));
+			}
+
+			return obj;
+		}
+
 
 		public static TmxText LoadTmxText(this TmxText text, XElement xText)
 		{

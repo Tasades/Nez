@@ -37,6 +37,14 @@ namespace Nez.Tiled
 
 		public Vector2[] Points;
 		public Dictionary<string, string> Properties;
+
+		// public TmxObjectTemplate Template;
+	}
+
+	public class TmxObjectTemplate : TmxDocument
+	{
+		public TmxObject TemplateObject;
+		public string Source;
 	}
 
 	public class TmxText
